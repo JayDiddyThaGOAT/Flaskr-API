@@ -1,3 +1,3 @@
 -- :name user_by_username :one
-SELECT * FROM users
+SELECT * FROM Users
 WHERE username = :username

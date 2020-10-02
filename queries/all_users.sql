@@ -1,2 +1,2 @@
 -- :name all_users :many
-SELECT * FROM users;
+SELECT * FROM Users
