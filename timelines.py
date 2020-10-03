@@ -9,8 +9,10 @@ from time import sleep
 from random import randrange
 from datetime import datetime
 
+# Configure timelines microservice to this app
 app = FlaskAPI(__name__)
 
+# Post a new tweet
 def post_tweet(username, text, delay = 0):
     if delay > 0:
         print(f"Posting {username}'s tweet in {delay} seconds")
@@ -18,6 +20,7 @@ def post_tweet(username, text, delay = 0):
 
     queries.post_tweet(author_name=username, tweet=text)
     
+# Initialize user's timelines present in the Users table (Run init in users microservice before running this one)
 @app.cli.command('init')
 def init_timelines():
     post_tweet("Bob", "If you don't like toenails, you probably shouldn't look at your feet", randrange(1, 5))
@@ -47,15 +50,17 @@ def init_timelines():
     post_tweet("Tom", "It's not possible to convince a monkey to give you a banana by promising it infinite bananas when they die", randrange(1, 5))
     post_tweet("Alice", "When I cook spaghetti, I like to boil it a few minutes past al dente so the noodles are super slippery", randrange(1, 5))
 
-
-@app.route('/', methods=['GET', 'POST'])
+# Returns recent tweets from all users
+@app.route('/', methods=['GET'])
 def get_public_timeline():
     return list(queries.public_timeline())
 
+# Returns recent tweets from all users that this user follows.
 @app.route('/<string:username>/home', methods=['GET'])
 def get_home_timeline(username):
     return list(queries.home_timeline(follower_name=username))
 
+# Returns recent tweets from a user. This page where user can post their tweets
 @app.route('/<string:username>/user', methods=['GET', 'POST'])
 def get_user_timeline(username):
     if request.method == 'POST':
