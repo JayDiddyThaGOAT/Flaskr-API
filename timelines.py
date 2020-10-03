@@ -1,3 +1,7 @@
+#Name: Jalen Jackson
+#Email: jaydiddy72@csu.fullerton.edu
+#Project 2: Microblog-Microservices
+
 from flask import request
 from flask_api import FlaskAPI
 import pugsql
