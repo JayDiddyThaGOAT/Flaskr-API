@@ -1,3 +1,3 @@
 -- :name remove_follower :affected
 DELETE FROM Relationships
-WHERE follower_id=:follower_id AND followed_id=:followed_id
+WHERE follower_name=:follower_name AND followed_name=:followed_name

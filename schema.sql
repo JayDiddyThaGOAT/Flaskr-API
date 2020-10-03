@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS Users;
 DROP TABLE IF EXISTS Relationships;
+DROP TABLE IF EXISTS Posts;
 
 CREATE TABLE Users(
     user_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -9,9 +10,17 @@ CREATE TABLE Users(
 );
 
 CREATE TABLE Relationships(
-    follower_id INTEGER NOT NULL,
-    followed_id INTEGER NOT NULL,
-    FOREIGN KEY (follower_id) REFERENCES Users (user_id),
-    FOREIGN KEY (followed_id) REFERENCES Users (user_id),
-    PRIMARY KEY (follower_id, followed_id)
+    follower_name TEXT NOT NULL,
+    followed_name TEXT NOT NULL,
+    FOREIGN KEY (follower_name) REFERENCES Users (username),
+    FOREIGN KEY (followed_name) REFERENCES Users (username),
+    PRIMARY KEY (follower_name, followed_name)
+);
+
+CREATE TABLE Posts(
+    post_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    author_name TEXT NOT NULL,
+    created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    tweet TEXT NOT NULL,
+    FOREIGN KEY (author_name) REFERENCES Users (username)
 );

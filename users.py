@@ -5,11 +5,10 @@ import pugsql
 
 # Configure microservice to app for showing user's data
 app = FlaskAPI(__name__)
-app.config.from_envvar('APP_CONFIG')
 
 # Create a module of database functions from a set of sql files on disk.
 queries = pugsql.module('queries/')
-queries.connect(app.config['DATABASE_URL'])
+queries.connect('sqlite:///database.db')
 
 # Registers a new account
 def create_user(username, email, password):
@@ -73,36 +72,28 @@ def filter_users(query_parameters):
 
 # Start following a new user
 def add_follower(username, usernameToFollow):
-    # Get the users with usernames from the parameters
-    userFollowing = user(username)
-    userToFollow = user(usernameToFollow)
 
-    # Collect the id's of these users and store them into the Relationships table
-    queries.add_follower(follower_id=userFollowing['user_id'], followed_id=userToFollow['user_id'])
+     # Add the usernames in the parameters into the Relationships table
+    queries.add_follower(follower_name=username, followed_name=usernameToFollow)
 
     # Show who the user followed
-    return userToFollow, status.HTTP_201_CREATED, {
+    return user(usernameToFollow), status.HTTP_201_CREATED, {
         'Location': f'/users/{username}/following/add'
     }
 
 # Stop following a new user
 def remove_follower(username, usernameToRemove):
-
-    # Get the users with usernames from the parameters
-    userRemoving = user(username)
-    userToRemove = user(usernameToRemove)
-
     # Remove the relationship between these two users out of the Relationships table
-    queries.remove_follower(follower_id=userRemoving['user_id'], followed_id=userToRemove['user_id'])
+    queries.remove_follower(follower_name=username, followed_name=usernameToRemove)
 
     # Show who the user removed
-    return userToRemove, status.HTTP_206_PARTIAL_CONTENT, {
+    return user(usernameToRemove), status.HTTP_206_PARTIAL_CONTENT, {
         'Location': f'/users/{username}/following/remove'
     }
 
 # Display the user's (with the matching username) following list
 def show_following(username):
-    return list(queries.show_following(follower_id=user(username)['user_id'])) 
+    return list(queries.show_following(follower_name=username))
 
 # Recreate database
 @app.cli.command('init')
