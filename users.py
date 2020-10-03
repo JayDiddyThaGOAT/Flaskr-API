@@ -118,20 +118,19 @@ def user(username):
         raise exceptions.NotFound()
 
 # Returns true if the supplied password matches the hashed password stored for that username in the database. 
-@app.route('/<string:username>/authenticate', methods=['GET', 'POST'])
+@app.route('/<string:username>/authenticate', methods=['GET'])
 def authenticate_user(username):
-    if request.method == 'POST':
-        try:
-            user_password = user(username)['password']
-            is_authenicated = check_password_hash(user_password, request.data['password'])
-            if is_authenicated:
-                return {"is_authenicated" : True}, status.HTTP_302_FOUND
-            else:
-                return {"is_autenicated": False}, status.HTTP_404_NOT_FOUND
-        except Exception as e:
-            return { 'error': str(e) }, status.HTTP_409_CONFLICT
+    try:
+        user_password = user(username)['password']
+        supplied_password = request.args.get('password')
 
-    return {"is_authenicated": "Type in a password in POST"}
+        is_authenicated = check_password_hash(user_password, supplied_password)
+        if is_authenicated:
+            return {"is_authenicated" : True}, status.HTTP_302_FOUND
+        else:
+            return {"is_autenicated": False}, status.HTTP_404_NOT_FOUND
+    except Exception as e:
+        return {"is_autenicated": "Password not found" }, status.HTTP_409_CONFLICT
 
 # Page where users can see who they follow
 @app.route('/<string:username>/followers', methods=['GET'])
