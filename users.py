@@ -3,7 +3,7 @@ from flask_api import FlaskAPI, status, exceptions
 from werkzeug.security import check_password_hash, generate_password_hash
 import pugsql
 
-# Configure microservice to app for showing user's data
+# Configure user's microservice to this app
 app = FlaskAPI(__name__)
 
 # Create a module of database functions from a set of sql files on disk.
@@ -40,36 +40,6 @@ def create_user(username, email, password):
         'Location': f'/users/{username}'
     }
 
-# Display users table that match the parameters
-def filter_users(query_parameters):
-    # Get the user's parameters and store them in their variables
-    user_id = query_parameters.get('user_id')
-    username = query_parameters.get('username')
-    email = query_parameters.get('email')
-
-    # Add valid query parameters into a list
-    query = "SELECT * FROM users WHERE"
-    to_filter = []
-
-    if user_id:
-        query += ' user_id=? AND'
-        to_filter.append(id)
-    if username:
-        query += ' username=? AND'
-        to_filter.append(username)
-    if email:
-        query += ' email=? AND'
-        to_filter.append(email)
-
-    # Run error if query parameter doesn't exist
-    if not (user_id or username or email):
-        raise exceptions.NotFound()
-    
-    # In the query, replace final ' AND' w/ semi-colon, then run it
-    query = query[:-4] + ';'
-    results = queries.engine.execute(query, to_filter).fetchall()
-    return list(map(dict, results))
-
 # Start following a new user
 def add_follower(username, usernameToFollow):
 
@@ -91,9 +61,6 @@ def remove_follower(username, usernameToRemove):
         'Location': f'/users/{username}/following/remove'
     }
 
-# Display the user's (with the matching username) following list
-def show_following(username):
-    return list(queries.show_following(follower_name=username))
 
 # Recreate database
 @app.cli.command('init')
@@ -129,24 +96,16 @@ def init_db():
         add_follower(tom['username'], charlie['username'])
         add_follower(tom['username'], mary['username'])
 
-# Display all of the users in the Users table
-@app.route('/users/all', methods=['GET'])
+# Display all of the users in the Users table. This page also creates new users
+@app.route('/', methods=['GET', 'POST'])
 def all_users():
+    if request.method == 'POST':
+        create_user(request.data['username'], request.data['email'], request.data['password'])
+    
     return list(queries.all_users())
 
-# Homepage where the users microservice functions are run
-@app.route('/users', methods=['GET', 'POST'])
-def users():
-    # Filter Users table with arguments requsted
-    if request.method == 'GET':
-        return filter_users(request.args)
-
-    # Add user to the Users table with the requested data
-    elif request.method == 'POST':
-        return create_user(request.data['username'], request.data['email'], request.data['password'])
-
 # Find user with the username in the URL then display its data if found
-@app.route('/users/<string:username>', methods=['GET'])
+@app.route('/<string:username>', methods=['GET'])
 def user(username):
     user = queries.user_by_username(username=username)
     if user:
@@ -155,8 +114,8 @@ def user(username):
         raise exceptions.NotFound()
 
 # Returns true if the supplied password matches the hashed password stored for that username in the database. 
-@app.route('/users/<string:username>/auth/', methods=['GET', 'POST'])
-def authenicate_user(username):
+@app.route('/<string:username>/authenticate', methods=['GET', 'POST'])
+def authenticate_user(username):
     if request.method == 'POST':
         try:
             user_password = user(username)['password']
@@ -170,18 +129,17 @@ def authenicate_user(username):
 
     return {"is_authenicated": "Type in a password in POST"}
 
-# Page where users can add followers (Displays user's follow list by default)
-@app.route('/users/<string:username>/following/add', methods=['GET', 'POST'])
-def add_followers(username):
-    if request.method == 'POST':
-        return add_follower(username, request.data['username'])
-    elif request.method == 'GET':
-        return show_following(username)
+# Page where users can see who they follow
+@app.route('/<string:username>/followers', methods=['GET'])
+def show_following(username):
+    return list(queries.show_following(follower_name=username))
 
-# Page where users can remove followers (Displays user's follow list by default)
-@app.route('/users/<string:username>/following/remove', methods=['GET', 'POST'])
-def remove_followers(username):
-    if request.method == 'POST':
-        return remove_follower(username, request.data['username'])
-    elif request.method == 'GET':
-        return show_following(username)
+# Page where users can add or remove people they follow
+@app.route('/<string:username>/followers/<string:usernameInFollowList>', methods=['GET', 'PUT', 'DELETE'])
+def edit_following(username, usernameInFollowList):
+    if request.method == 'PUT':
+        add_follower(username, usernameInFollowList)
+    elif request.method == 'DELETE':
+        remove_follower(username, usernameInFollowList)
+
+    return show_following(username)
