@@ -1,3 +1,7 @@
+#Name: Jalen Jackson
+#Email: jaydiddy72@csu.fullerton.edu
+#Project 2: Microblog-Microservices
+
 from flask import request, jsonify, redirect, url_for
 from flask_api import FlaskAPI, status, exceptions
 from werkzeug.security import check_password_hash, generate_password_hash
