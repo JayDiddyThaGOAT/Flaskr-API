@@ -132,17 +132,14 @@ def authenticate_user(username):
     except Exception as e:
         return {"is_autenicated": "Password not found" }, status.HTTP_409_CONFLICT
 
-# Page where users can see who they follow
-@app.route('/<string:username>/followers', methods=['GET'])
-def show_following(username):
+# Page where users can add, remove, or see who they follow 
+@app.route('/<string:username>/following/', methods=['GET', 'POST', 'DELETE'])
+def following(username):
+    if request.method == 'POST' and 'username' in request.data:
+        usernameToFollow = request.data.get('username')
+        add_follower(username, usernameToFollow)
+    elif request.method == 'DELETE' and 'username' in request.args:
+        usernameToRemove = request.args.get('username')
+        remove_follower(username, usernameToRemove)
+
     return list(queries.show_following(follower_name=username))
-
-# Page where users can add or remove people they follow
-@app.route('/<string:username>/followers/<string:usernameInFollowList>', methods=['GET', 'PUT', 'DELETE'])
-def edit_following(username, usernameInFollowList):
-    if request.method == 'PUT':
-        add_follower(username, usernameInFollowList)
-    elif request.method == 'DELETE':
-        remove_follower(username, usernameInFollowList)
-
-    return show_following(username)
