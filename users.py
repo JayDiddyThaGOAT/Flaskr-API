@@ -52,7 +52,7 @@ def add_follower(username, usernameToFollow):
 
     # Show who the user followed
     return user(usernameToFollow), status.HTTP_201_CREATED, {
-        'Location': f'/users/{username}/following/add'
+        'Location': f'/users/{username}/following?username={usernameToFollow}'
     }
 
 # Stop following a new user
@@ -62,7 +62,7 @@ def remove_follower(username, usernameToRemove):
 
     # Show who the user removed
     return user(usernameToRemove), status.HTTP_206_PARTIAL_CONTENT, {
-        'Location': f'/users/{username}/following/remove'
+        'Location': f'/users/{username}/following?username={usernameToFollow}'
     }
 
 
