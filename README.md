@@ -27,6 +27,8 @@ schema.sql
 ```
 
 ## Requirements
+### Operating System
+* Linux (Ubuntu 20.04 Used for Development)
 ### Tools
 * Python 3
 * SQL
