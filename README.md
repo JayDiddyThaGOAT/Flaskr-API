@@ -8,6 +8,9 @@ In this project, two back-end microservices were built for a microblogging servi
 ## Services
 Your microservices should be written as two separate Flask applications connected to a single SQLite Version 3 database.
 
+For more information on the REST API definitions for each microservice and the database.\
+Go to [Rest API Definitions.pdf](https://github.com/JayDiddyThaGOAT/Flaskr-API/blob/master/REST%20API%20Definitions.pdf)
+
 ### Users Service
 ```python
 users.py
