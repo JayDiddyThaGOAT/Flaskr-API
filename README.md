@@ -15,11 +15,13 @@ Go to [Rest API Definitions.pdf](https://github.com/JayDiddyThaGOAT/Flaskr-API/b
 ```python
 users.py
 ```
+![](https://thumbs.gfycat.com/MedicalQuestionableAmericanbadger-size_restricted.gif)
 
 ### Timelines Service
 ```python
 timelines.py
 ```
+![](https://thumbs.gfycat.com/AccurateScaredKinglet-size_restricted.gif)
 
 ### SQLite Version 3 Database
 ```sql
