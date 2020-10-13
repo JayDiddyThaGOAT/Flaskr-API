@@ -45,7 +45,7 @@ schema.sql
 ## Installation
 1. Activate the virtual environment if requirements are installed locally on your computer
 ```bash
-$ .venv/bin/activate
+$ source venv/bin/activate
 ```
 2. Initialize database (Adds tables then fills them with test users following each other)
 ```bash
