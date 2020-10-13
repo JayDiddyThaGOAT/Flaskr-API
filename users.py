@@ -62,7 +62,7 @@ def remove_follower(username, usernameToRemove):
 
     # Show who the user removed
     return user(usernameToRemove), status.HTTP_206_PARTIAL_CONTENT, {
-        'Location': f'/users/{username}/following?username={usernameToFollow}'
+        'Location': f'/users/{username}/following?username={usernameToRemove}'
     }
 
 
