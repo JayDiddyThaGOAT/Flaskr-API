@@ -80,6 +80,9 @@ def reply_to_direct_message(to_username, from_username, reply):
     if reply is None:
         raise exceptions.NotFound()
 
+    user(to_username)
+    user(from_username)
+
     table = dynamodb.Table('Messages')
     table.update_item(
         Key={
@@ -106,6 +109,8 @@ def show_direct_messages():
 # Lists DM's to & from a user
 @app.route("/<string:username>", methods=['GET'])
 def list_direct_messages_for(username):
+    user(username)
+
     table = dynamodb.Table('Messages')
     response = table.scan(
         FilterExpression=Key('from').eq(username) | Attr('to').eq(username)
@@ -117,6 +122,9 @@ def list_direct_messages_for(username):
 def list_replies(to_username, from_username):
     if request.method == 'POST':
         reply_to_direct_message(to_username, from_username, request.data['reply'])
+    else:
+        user(to_username)
+        user(from_username)
     
     table = dynamodb.Table('Messages')
     response = table.get_item(Key={'from': from_username, 'to': to_username})
