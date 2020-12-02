@@ -1,9 +1,10 @@
 #Name: Jalen Jackson
 #Email: jaydiddy72@csu.fullerton.edu
-#Project 2: Microblog-Microservices
+#Project 6: Caching
 
 from flask import request, make_response
 from flask_api import FlaskAPI, status, exceptions
+from flask_caching import Cache
 import pugsql
 
 from users import queries
@@ -14,8 +15,18 @@ from random import randrange
 from wsgiref.handlers import format_date_time
 from datetime import datetime
 
+config = {
+    "DEBUG": True,          # some Flask specific configs
+    "CACHE_TYPE": "simple", # Flask-Caching related configs
+    "CACHE_DEFAULT_TIMEOUT": 120
+}
+
 # Configure timelines microservice to this app
 app = FlaskAPI(__name__)
+
+# Tell Falsk to use the above defined config
+app.config.from_mapping(config)
+cache = Cache(app)
 
 # Post a new tweet
 def post_tweet(username, text, delay = 0):
@@ -77,7 +88,7 @@ def get_public_timeline():
         last_modified = datetime.strptime(resp.headers['Last-Modified'], http_time_format)
         if_modified_since = datetime.strptime(request.headers['If-Modified-Since'], http_time_format)
 
-        # Calculate mintues passed between last modified and if_modified_since timestamp
+        # Calculate minutes passed between last modified and if_modified_since timestamp
         minutes_passed = (last_modified - if_modified_since).total_seconds() / 60.0
         if minutes_passed < 5:
             resp.status_code = status.HTTP_304_NOT_MODIFIED
@@ -90,9 +101,18 @@ def get_public_timeline():
     return resp
 
 # Returns recent tweets from all users that this user follows.
+# Those tweets are returned from out of the cache
 @app.route('/<string:username>/home', methods=['GET'])
 def get_home_timeline(username):
-    return list(queries.home_timeline(follower_name=username))
+    # If the username is not in the cache, put the user's home timeline into it
+    if cache.get(username) == None:
+        cache.set(username, list(queries.home_timeline(follower_name=username)))
+        app.logger.debug(f'Added {username}\'s timeline into cache')
+    else:
+        app.logger.debug(f'Retreived {username}\'s timeline from cache')
+    
+    # Otherwise just return the username's home timeline in the cache
+    return cache.get(username)
 
 # Returns recent tweets from a user. This page where user can post their tweets
 @app.route('/<string:username>/user', methods=['GET', 'POST'])
