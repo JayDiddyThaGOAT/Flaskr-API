@@ -2,15 +2,16 @@
 #Email: jaydiddy72@csu.fullerton.edu
 #Project 2: Microblog-Microservices
 
-from flask import request
-from flask_api import FlaskAPI
+from flask import request, make_response
+from flask_api import FlaskAPI, status, exceptions
 import pugsql
 
 from users import queries
 
-from time import sleep
-
+from time import sleep, mktime
 from random import randrange
+
+from wsgiref.handlers import format_date_time
 from datetime import datetime
 
 # Configure timelines microservice to this app
@@ -55,9 +56,38 @@ def init_timelines():
     post_tweet("Alice", "When I cook spaghetti, I like to boil it a few minutes past al dente so the noodles are super slippery", randrange(1, 5))
 
 # Returns recent tweets from all users
+# Added HTTP caching to ensure safety returning posts slightly behind the real-time activity on the site.
 @app.route('/', methods=['GET'])
 def get_public_timeline():
-    return list(queries.public_timeline())
+    # Check for an If-Modified-Since: request header 
+    if_modified_since_exists = 'If-Modified-Since' in request.headers 
+
+    # Query the database for the public timeline
+    resp = make_response(list(queries.public_timeline()))
+
+    # Add a Last-Modified: header to responses containing the current date. 
+    now = datetime.now()
+    stamp = mktime(now.timetuple())
+    resp.headers['Last-Modified'] = format_date_time(stamp)
+    
+    # If the header is present, check it against the current time and return HTTP 304 if the difference is less than 5 minutes.
+    if if_modified_since_exists:
+        # Convert the headers from string into datetimes
+        http_time_format = '%a, %d %b %Y %H:%M:%S GMT'
+        last_modified = datetime.strptime(resp.headers['Last-Modified'], http_time_format)
+        if_modified_since = datetime.strptime(request.headers['If-Modified-Since'], http_time_format)
+
+        # Calculate mintues passed between last modified and if_modified_since timestamp
+        minutes_passed = (last_modified - if_modified_since).total_seconds() / 60.0
+        if minutes_passed < 5:
+            resp.status_code = status.HTTP_304_NOT_MODIFIED
+        else:
+            resp.status_code = status.HTTP_200_OK
+    else:
+        resp.status_code = status.HTTP_200_OK
+
+    
+    return resp
 
 # Returns recent tweets from all users that this user follows.
 @app.route('/<string:username>/home', methods=['GET'])
