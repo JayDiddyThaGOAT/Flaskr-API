@@ -1,10 +1,10 @@
 # Flaskr-API
 **Name**: Jalen Jackson \
-**Project 2**: Microblog-Microservices
+**Project 6**: Caching
 
 ## Description
-This project expands on Project 2, adding polyglot persistence by introducing a new microservice built with DynamoDB Local \
-a version of Amazon’s DynamoDB service that runs locally on your own computer.
+This project expands on Project 2, adding HTTP and object caching to reduce the load on the database caused by retrieving timelines. \
+To show the caching, running the timelines microservices is mandatory. Other microservices, like users, are optional.
 
 ## Services
 Your microservices should be written as two separate Flask applications connected to a single SQLite Version 3 database.
