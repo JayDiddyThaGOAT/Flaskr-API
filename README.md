@@ -1,13 +1,14 @@
 # Flaskr-API
 **Name**: Jalen Jackson \
-**Project 2**: Microblog-Microservices
+**Project 5**: NoSQL
 
 ## Description
 This project expands on Project 2, adding polyglot persistence by introducing a new microservice built with DynamoDB Local \
 a version of Amazon’s DynamoDB service that runs locally on your own computer.
 
 ## Services
-Your microservices should be written as two separate Flask applications connected to a single SQLite Version 3 database.
+Your microservices should be written as three separate Flask applications. \
+Two connected to a single SQLite Version 3 database and one conntected to an Amazon Dynamo database.
 
 For more information on the REST API definitions for each microservice and the database.\
 Go to [Rest API Definitions.pdf](https://github.com/JayDiddyThaGOAT/Flaskr-API/blob/master/REST%20API%20Definitions.pdf)
