@@ -22,7 +22,6 @@ dynamodb = boto3.resource('dynamodb')
 # Create the DyanmoDB table for Direct Messages
 @app.cli.command("init")
 def init_dms():
-
     table = dynamodb.create_table(
         TableName='Messages',
         KeySchema=[
@@ -57,7 +56,7 @@ def init_dms():
     return table
 
 # Sends a direct message to a user
-def send_direct_message(to_username, from_username, message):
+def send_direct_message(to_username, from_username, message, quick_replies=None):
     if message is None:
         raise exceptions.NotFound()
 
@@ -71,7 +70,8 @@ def send_direct_message(to_username, from_username, message):
             'to': to_username,
             'timestamp': datetime.now().ctime(),
             'message': message,
-            'replies': []
+            'replies': [],
+            'quick_replies': quick_replies
         }
     )
 
@@ -84,6 +84,13 @@ def reply_to_direct_message(to_username, from_username, reply):
     user(from_username)
 
     table = dynamodb.Table('Messages')
+
+    message = table.get_item(Key={'from': from_username, 'to': to_username})
+    quick_replies = message['Item']['quick_replies']
+
+    if reply.isdigit() and int(reply) < len(quick_replies):
+        reply = quick_replies[int(reply)]
+
     table.update_item(
         Key={
             'from': from_username,
@@ -100,7 +107,7 @@ def reply_to_direct_message(to_username, from_username, reply):
 @app.route("/", methods=['GET', 'POST'])
 def show_direct_messages():
     if request.method == 'POST':
-        send_direct_message(request.data['to'], request.data['from'], request.data['message'])
+        send_direct_message(request.data['to'], request.data['from'], request.data['message'], request.data['quick_replies'])
     
     table = dynamodb.Table('Messages')
     response = table.scan()
@@ -128,4 +135,6 @@ def list_replies(to_username, from_username):
     
     table = dynamodb.Table('Messages')
     response = table.get_item(Key={'from': from_username, 'to': to_username})
-    return response['Item']['replies']
+    quick_replies = enumerate(response['Item']['quick_replies'])
+    replies = response['Item']['replies']
+    return {'quick_replies': [f"{index}: {quick_reply}" for index, quick_reply in quick_replies], 'replies': replies}
