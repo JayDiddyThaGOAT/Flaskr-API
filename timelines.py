@@ -7,9 +7,9 @@ from flask_api import FlaskAPI, status, exceptions
 from flask_caching import Cache
 import pugsql
 
-from users import queries
+from users import queries, following
 
-from time import sleep, mktime
+from time import sleep, mktime, strptime
 from random import randrange
 
 from wsgiref.handlers import format_date_time
@@ -101,23 +101,37 @@ def get_public_timeline():
     return resp
 
 # Returns recent tweets from all users that this user follows.
-# Those tweets are returned from out of the cache
+# Those tweets are returned from of their cache
 @app.route('/<string:username>/home', methods=['GET'])
 def get_home_timeline(username):
-    # If the username is not in the cache, put the user's home timeline into it
-    if cache.get(username) == None:
-        cache.set(username, list(queries.home_timeline(follower_name=username)))
-        app.logger.debug(f'Added {username}\'s timeline into cache')
-    else:
-        app.logger.debug(f'Retreived {username}\'s timeline from cache')
-    
-    # Otherwise just return the username's home timeline in the cache
-    return cache.get(username)
+    # Store up to 25 tweets in this list
+    home_timeline = []
 
-# Returns recent tweets from a user. This page where user can post their tweets
+    # Iterate through each user who is followed by user with username
+    for user in following(username):
+        # Iterate through those user's timelines and add it to home timeline list
+        user_timeline = get_user_timeline(user['username'])
+        for tweet in user_timeline:
+            home_timeline.append(tweet)
+    
+    # Return the home timeline sorted by when the tweet was created in descending order
+    return sorted(home_timeline, key = lambda tweet : mktime(strptime(tweet['created'], '%Y-%m-%d %H:%M:%S')), reverse=True)[:25]
+
+# Returns recent tweets from a user. This page where user can preturn list(queries.user_timeline(username=username))ost their tweets
 @app.route('/<string:username>/user', methods=['GET', 'POST'])
 def get_user_timeline(username):
     if request.method == 'POST':
         post_tweet(username, request.data['tweet'])
+        cache.set(username, list(queries.user_timeline(username=username)))
+        app.logger.debug(f'Updated {username}\'s timeline in cache')
+        return cache.get(username)
 
-    return list(queries.user_timeline(username=username))
+    # If the username is not in the cache, put the user's timeline into it
+    if cache.get(username) == None:
+        cache.set(username, list(queries.user_timeline(username=username)))
+        app.logger.debug(f'Added {username}\'s timeline into cache')
+    else:
+        app.logger.debug(f'Retreived {username}\'s timeline from cache')
+    
+    # Otherwise just return the user's timeline in the cache
+    return cache.get(username)
